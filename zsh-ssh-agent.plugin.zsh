@@ -29,12 +29,17 @@ function _start_agent() {
     . "$SSH_ENV" > /dev/null
 }
 
-_start_agent
 
-if [[ -S "$SSH_AUTH_SOCK" && ! -h "$SSH_AUTH_SOCK" ]]; then
-    ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock;
+# Persist the SSH_AUTH_SOCK environment variable when using multiplexers (e.g. tmux)
+if [[ -n "$SSH_AUTH_SOCK" ]]; then
+    if [[ ! -L "$SSH_AUTH_SOCK" ]]; then
+        # Create a symlink for the SSH agent socket
+        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock
+        export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
+    fi
+else
+    _start_agent
 fi
-export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock;
 
 unset SSH_ENV
 unfunction _start_agent
